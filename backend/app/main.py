@@ -1,25 +1,23 @@
+# app/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import auth_routes
-from . import debate, matchmaking
+from . import debate, matchmaking  # Include both
+from .socketio_instance import sio  # Use the shared socketio instance
+
 import socketio
 
-sio = socketio.AsyncServer(
-    async_mode="asgi",
-    cors_allowed_origins="*"
-)
-
-# Define the list of allowed origins explicitly
+# Define allowed origins for CORS
 origins = [
     "http://127.0.0.1:8080",
     "http://localhost:8080",
     "http://localhost:5173"
 ]
 
-# Create FastAPI instance
+# Create FastAPI app
 fastapi_app = FastAPI()
 
-# Enable CORS
+# Add CORS middleware
 fastapi_app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -28,7 +26,7 @@ fastapi_app.add_middleware(
     allow_headers=["*"],
 )
 
-# Log incoming requests for debugging
+# Optional: log all incoming requests
 @fastapi_app.middleware("http")
 async def log_requests(request, call_next):
     print(f"Incoming request: {request.method} {request.url}")
@@ -39,5 +37,5 @@ async def log_requests(request, call_next):
 fastapi_app.include_router(auth_routes.router)
 fastapi_app.include_router(debate.router)
 
-# Combine Socket.IO and FastAPI into a single ASGI app
+# Combine Socket.IO and FastAPI into one ASGI app
 app = socketio.ASGIApp(sio, other_asgi_app=fastapi_app)

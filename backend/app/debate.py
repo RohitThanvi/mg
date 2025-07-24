@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from . import models, schemas
 from .database import get_db
 from .ai import get_ai_response
-from .main import sio
+from .socketio_instance import sio
 
 router = APIRouter(
     prefix="/debate",

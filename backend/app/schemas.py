@@ -18,8 +18,7 @@ class UserOut(BaseModel):
     mind_tokens: Optional[int] = 0
 
     class Config:
-        orm_mode = True
-
+        from_attributes = True
 # ------------------ AUTH TOKEN ------------------ #
 class Token(BaseModel):
     access_token: str
