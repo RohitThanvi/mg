@@ -36,6 +36,7 @@ fastapi_app.include_router(auth_routes.router)
 fastapi_app.include_router(debate.router)
 fastapi_app.include_router(leaderboard_routes.router)
 fastapi_app.include_router(dashboard_routes.router)
+fastapi_app.include_router(matchmaking.router)
 
 # Combine Socket.IO and FastAPI into a single ASGI app
 app = socketio.ASGIApp(sio, other_asgi_app=fastapi_app)

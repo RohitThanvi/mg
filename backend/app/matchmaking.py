@@ -1,8 +1,19 @@
 from .socketio_instance import sio
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from . import database, models, schemas
+
+router = APIRouter()
 
 # In-memory store for online users
 # In a production app, you'd use Redis or a similar store
 online_users = {}
+
+@router.post("/match")
+def match(user_id: int, db: Session = Depends(database.get_db)):
+    # This is a placeholder for the old match endpoint.
+    # The new matchmaking logic is handled by websockets.
+    return {"message": "This endpoint is deprecated. Please use websockets."}
 
 @sio.event
 async def connect(sid, environ):
