@@ -1,4 +1,4 @@
-from .main import sio
+from .socketio_instance import sio
 
 # In-memory store for online users
 # In a production app, you'd use Redis or a similar store
@@ -44,11 +44,18 @@ async def challenge_user(sid, data):
     challenger = data.get('challenger')
     topic = data.get('topic')
 
-    # Check if opponent_id is a string and exists in online_users
-    if isinstance(opponent_id, str) and opponent_id in online_users:
+    if opponent_id == 'ai':
+        # Create an AI opponent
+        ai_opponent = {
+            'id': 'ai',
+            'username': 'AI Challenger',
+            'elo': 1200,
+            'is_ai': True
+        }
+        await sio.emit('challenge_accepted', {'opponent': ai_opponent, 'topic': topic}, room=sid)
+    elif isinstance(opponent_id, str) and opponent_id in online_users:
         opponent_sid = online_users[opponent_id]['sid']
         await sio.emit('challenge_received', {'challenger': challenger, 'topic': topic}, room=opponent_sid)
-    # Check if opponent_id is an integer and exists in online_users
     elif isinstance(opponent_id, int) and str(opponent_id) in online_users:
         opponent_sid = online_users[str(opponent_id)]['sid']
         await sio.emit('challenge_received', {'challenger': challenger, 'topic': topic}, room=opponent_sid)

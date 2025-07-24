@@ -43,35 +43,32 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        // Fetch user debates and leaderboard
-        // These would be real API calls to your FastAPI backend
-        setDebates([
-          {
-            id: '1',
-            topic: 'AI will replace human creativity',
-            opponent: 'CyberDebater_X',
-            result: 'win',
-            score: 85,
-            date: '2024-01-15',
-            feedback: 'Excellent logical flow and evidence presentation.'
-          },
-          {
-            id: '2',
-            topic: 'Social media benefits outweigh harms',
-            opponent: 'LogicMaster99',
-            result: 'loss',
-            score: 72,
-            date: '2024-01-14',
-            feedback: 'Good arguments but could improve counter-argument handling.'
-          }
+        const [statsRes, historyRes, leaderboardRes] = await Promise.all([
+          fetch('http://localhost:8000/dashboard/stats', {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+          }),
+          fetch('http://localhost:8000/dashboard/history', {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+          }),
+          fetch('http://localhost:8000/leaderboard/'),
         ]);
 
-        setLeaderboard([
-          { rank: 1, username: 'NeuralNinja', elo: 1850, mind_tokens: 2500 },
-          { rank: 2, username: 'DebateLord42', elo: 1820, mind_tokens: 2300 },
-          { rank: 3, username: 'LogicQueen', elo: 1795, mind_tokens: 2100 },
-          { rank: 4, username: user?.username || 'You', elo: user?.elo || 1200, mind_tokens: user?.mind_tokens || 500 },
-        ]);
+        const stats = await statsRes.json();
+        const history = await historyRes.json();
+        const leaderboard = await leaderboardRes.json();
+
+        setDebates(history);
+        setLeaderboard(leaderboard.map((user, index) => ({ ...user, rank: index + 1 })));
+
+        // This is a bit of a hack, since the stats are not part of the user object
+        // In a real app, you might want to update the user object in the AuthContext
+        // or have a separate state for stats.
+        if (user) {
+          user.debates_won = stats.debates_won;
+          user.debates_lost = stats.debates_lost;
+          user.debates_competed = stats.debates_competed;
+        }
+
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
       } finally {
@@ -180,7 +177,7 @@ const Dashboard = () => {
               <div>
                 <p className="text-sm text-muted-foreground">Wins</p>
                 <p className="text-2xl font-bold text-foreground">
-                  {debates.filter(d => d.result === 'win').length}
+                  {user?.debates_won}
                 </p>
               </div>
             </div>
@@ -193,7 +190,7 @@ const Dashboard = () => {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Debates</p>
-                <p className="text-2xl font-bold text-foreground">{debates.length}</p>
+                <p className="text-2xl font-bold text-foreground">{user?.debates_competed}</p>
               </div>
             </div>
           </Card>
@@ -212,17 +209,16 @@ const Dashboard = () => {
                   <div className="flex items-center justify-between mb-2">
                     <p className="font-medium text-foreground">{debate.topic}</p>
                     <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                      debate.result === 'win' ? 'bg-cyber-green/20 text-cyber-green' :
-                      debate.result === 'loss' ? 'bg-cyber-red/20 text-cyber-red' :
-                      'bg-cyber-gold/20 text-cyber-gold'
+                      debate.winner === user?.username ? 'bg-cyber-green/20 text-cyber-green' :
+                      debate.winner === 'draw' ? 'bg-cyber-gold/20 text-cyber-gold' :
+                      'bg-cyber-red/20 text-cyber-red'
                     }`}>
-                      {debate.result.toUpperCase()}
+                      {debate.winner === user?.username ? 'WIN' : debate.winner === 'draw' ? 'DRAW' : 'LOSS'}
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground mb-1">
-                    vs {debate.opponent} • Score: {debate.score}
+                    vs {debate.opponent_username || 'AI'}
                   </p>
-                  <p className="text-xs text-muted-foreground">{debate.feedback}</p>
                 </div>
               ))}
             </div>

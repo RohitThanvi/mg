@@ -156,16 +156,27 @@ const Debate = () => {
 
   const endDebate = () => {
     setIsDebateActive(false);
-    // Navigate to results page with debate data
-    navigate('/result', {
-      state: {
-        opponent,
-        topic,
-        messages,
-        duration: 900 - timeLeft,
-      }
-    });
+    socket.emit('end_debate', { debate_id: debateId });
   };
+
+  useEffect(() => {
+    socket.on('debate_ended', (data) => {
+      // Navigate to results page with debate data
+      navigate('/result', {
+        state: {
+          opponent,
+          topic,
+          messages,
+          duration: 900 - timeLeft,
+          winner: data.winner,
+        }
+      });
+    });
+
+    return () => {
+      socket.off('debate_ended');
+    };
+  }, [socket, opponent, topic, messages, timeLeft, navigate]);
 
   const forfeit = () => {
     toast({

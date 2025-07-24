@@ -106,6 +106,10 @@ const Matchmaking = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
+            <Button onClick={() => handleChallenge({ id: 'ai', username: 'AI Bot', elo: 1200 })} size="lg" className="w-full">
+              <Sword className="mr-2 h-4 w-4" />
+              Challenge AI Bot
+            </Button>
             {onlineUsers
               .filter((onlineUser) => onlineUser.id !== user?.id)
               .map((onlineUser) => (
