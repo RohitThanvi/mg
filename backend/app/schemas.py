@@ -18,7 +18,13 @@ class UserOut(BaseModel):
     mind_tokens: Optional[int] = 0
 
     class Config:
-        from_attributes = True
+        orm_mode = True
+
+class UserStats(BaseModel):
+    debates_won: int
+    debates_lost: int
+    debates_competed: int
+
 # ------------------ AUTH TOKEN ------------------ #
 class Token(BaseModel):
     access_token: str

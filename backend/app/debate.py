@@ -4,6 +4,7 @@ from . import models, schemas
 from .database import get_db
 from .ai import get_ai_response
 from .socketio_instance import sio
+from .evaluation import evaluate_debate
 
 router = APIRouter(
     prefix="/debate",
@@ -97,3 +98,32 @@ async def user_message(sid, data):
 
         # 6. Broadcast AI's message to the room
         await sio.emit('new_message', schemas.MessageOut.from_orm(ai_message).dict())
+
+@sio.event
+async def end_debate(sid, data):
+    debate_id = data.get('debate_id')
+    with Session(bind=get_db.engine) as db:
+        messages = db.query(models.Message).filter(models.Message.debate_id == debate_id).all()
+        winner = evaluate_debate(messages)
+
+        user_id = None
+        for message in messages:
+            if message.sender_type == 'user':
+                user_id = message.user_id
+                break
+
+        if user_id:
+            user = db.query(models.User).filter(models.User.id == user_id).first()
+            if winner == 'user':
+                user.elo += 10
+                user.mind_tokens += 5
+            elif winner == 'ai':
+                user.elo -= 10
+            db.commit()
+
+        # Save debate result
+        db_debate = db.query(models.Debate).filter(models.Debate.id == debate_id).first()
+        db_debate.winner = winner
+        db.commit()
+
+        await sio.emit('debate_ended', {'winner': winner}, room=sid)

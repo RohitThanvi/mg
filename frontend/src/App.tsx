@@ -11,6 +11,7 @@ import Matchmaking from "./pages/Matchmaking";
 import Debate from "./pages/Debate";
 import Result from "./pages/Result";
 import NotFound from "./pages/NotFound";
+import Leaderboard from "./pages/Leaderboard";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ const App = () => (
             <Route path="/matchmaking" element={<ProtectedRoute><Matchmaking /></ProtectedRoute>} />
             <Route path="/debate" element={<ProtectedRoute><Debate /></ProtectedRoute>} />
             <Route path="/result" element={<ProtectedRoute><Result /></ProtectedRoute>} />
+            <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
