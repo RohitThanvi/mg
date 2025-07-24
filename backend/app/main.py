@@ -2,8 +2,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import auth_routes
 from . import debate, matchmaking
-from .socket_io import sio
 import socketio
+
+sio = socketio.AsyncServer(
+    async_mode="asgi",
+    cors_allowed_origins="*"
+)
 
 # Define the list of allowed origins explicitly
 origins = [

@@ -1,4 +1,4 @@
-from .socket_io import sio
+from .main import sio
 
 # In-memory store for online users
 # In a production app, you'd use Redis or a similar store
