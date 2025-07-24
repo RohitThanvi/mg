@@ -45,16 +45,18 @@ class DebateOut(BaseModel):
 # ------------------ MESSAGE SCHEMAS ------------------ #
 class MessageCreate(BaseModel):
     debate_id: int
-    sender_id: int
+    sender_id: Optional[int] = None
     content: str
+    sender_type: str = 'user'
 
 
 class MessageOut(BaseModel):
     id: int
     content: str
-    sender_id: int
+    sender_id: Optional[int] = None
     debate_id: int
     timestamp: datetime
+    sender_type: str
 
     class Config:
         from_attributes = True
