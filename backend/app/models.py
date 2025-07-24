@@ -36,9 +36,10 @@ class Message(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     debate_id = Column(Integer, ForeignKey("debates.id"), nullable=False)
-    sender_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    sender_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     content = Column(Text, nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow)
+    sender_type = Column(String, default='user')
 
     debate = relationship("Debate", back_populates="messages")
     sender = relationship("User", back_populates="messages")
