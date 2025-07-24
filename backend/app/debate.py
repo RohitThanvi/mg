@@ -50,30 +50,50 @@ def get_messages_route(debate_id: int, db: Session = Depends(get_db)):
         .all()
     )
 
-# ----------------- AI DEBATE ENDPOINT -----------------
-@router.post("/{debate_id}/ai-message", response_model=schemas.MessageOut)
-async def create_ai_message_route(debate_id: int, message: schemas.MessageCreate, db: Session = Depends(get_db)):
-    # 1. Save user's message
-    user_message = models.Message(**message.dict(), debate_id=debate_id)
-    db.add(user_message)
-    db.commit()
-    db.refresh(user_message)
-    await sio.emit('new_message', schemas.MessageOut.from_orm(user_message).dict())
+# ----------------- SOCKET.IO AI DEBATE EVENTS -----------------
+@sio.event
+async def user_message(sid, data):
+    debate_id = data.get('debate_id')
+    user_id = data.get('user_id')
+    content = data.get('content')
 
-    # 2. Get AI response
-    ai_prompt = f"The user in a debate said: '{message.content}'. Respond to this argument."
+    # Use a database session from the pool
+    with Session(bind=get_db.engine) as db:
+        # 1. Save user's message
+        user_message = models.Message(
+            content=content,
+            user_id=user_id,
+            debate_id=debate_id,
+            sender_type='user'
+        )
+        db.add(user_message)
+        db.commit()
+        db.refresh(user_message)
+
+        # Optionally, emit the user message back to the room if needed
+        # await sio.emit('new_message', schemas.MessageOut.from_orm(user_message).dict())
+
+    # 2. Notify clients that AI is "typing"
+    await sio.emit('ai_typing', {'is_typing': True, 'debateId': debate_id})
+
+    # 3. Get AI response
+    ai_prompt = f"The user in a debate said: '{content}'. Respond to this argument."
     ai_content = get_ai_response(ai_prompt)
 
-    # 3. Save AI's message
-    ai_message = models.Message(
-        content=ai_content,
-        user_id=None, # Or a specific AI user ID
-        debate_id=debate_id,
-        sender_type='ai'
-    )
-    db.add(ai_message)
-    db.commit()
-    db.refresh(ai_message)
-    await sio.emit('new_message', schemas.MessageOut.from_orm(ai_message).dict())
+    # 4. Notify clients that AI is done "typing"
+    await sio.emit('ai_typing', {'is_typing': False, 'debateId': debate_id})
 
-    return user_message
+    # 5. Save AI's message
+    with Session(bind=get_db.engine) as db:
+        ai_message = models.Message(
+            content=ai_content,
+            user_id=None,  # Or a specific AI user ID
+            debate_id=debate_id,
+            sender_type='ai'
+        )
+        db.add(ai_message)
+        db.commit()
+        db.refresh(ai_message)
+
+        # 6. Broadcast AI's message to the room
+        await sio.emit('new_message', schemas.MessageOut.from_orm(ai_message).dict())

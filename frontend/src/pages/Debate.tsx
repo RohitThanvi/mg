@@ -106,11 +106,12 @@ const Debate = () => {
 
     const messageData = {
       debate_id: debateId,
-      sender_id: user?.id,
+      user_id: user?.id,
       content: currentMessage,
+      sender_type: 'user',
     };
 
-    // optimistic update
+    // Optimistic update
     const newMessage: Message = {
       id: Date.now().toString(),
       content: currentMessage,
@@ -121,14 +122,30 @@ const Debate = () => {
     setMessages(prev => [...prev, newMessage]);
     setCurrentMessage('');
 
-
-    const endpoint = opponent.isAI ? 'ai-message' : 'messages';
-    await fetch(`http://localhost:8000/debate/${debateId}/${endpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(messageData),
-    });
+    if (opponent.isAI) {
+      // Emit event to backend for AI response
+      socket.emit('user_message', messageData);
+    } else {
+      // Standard message for human opponent
+      await fetch(`http://localhost:8000/debate/${debateId}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(messageData),
+      });
+    }
   };
+
+  useEffect(() => {
+    socket.on('ai_typing', (data) => {
+      if (data.debateId === debateId) {
+        setIsTyping(data.is_typing);
+      }
+    });
+
+    return () => {
+      socket.off('ai_typing');
+    };
+  }, [socket, debateId]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
