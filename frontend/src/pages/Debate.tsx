@@ -15,12 +15,14 @@ import {
   Shield,
   Sword
 } from 'lucide-react';
+import io from 'socket.io-client';
 
 interface Message {
   id: string;
   content: string;
-  sender: 'user' | 'opponent';
+  sender: 'user' | 'opponent' | 'ai';
   timestamp: Date;
+  sender_type: 'user' | 'ai';
 }
 
 interface Opponent {
@@ -55,7 +57,24 @@ const Debate = () => {
     scrollToBottom();
   }, [messages]);
 
+  const debateId = location.state?.debateId || '1';
+  const socket = io('http://localhost:8000');
+
   useEffect(() => {
+    // Fetch initial messages
+    fetch(`http://localhost:8000/debate/${debateId}/messages`)
+      .then(res => res.json())
+      .then(data => setMessages(data.map((m: any) => ({...m, sender: m.sender_type}))));
+
+    // Setup socket listeners
+    socket.on('connect', () => {
+      console.log('Connected to socket server');
+    });
+
+    socket.on('new_message', (message: any) => {
+      setMessages(prev => [...prev, {...message, sender: message.sender_type}]);
+    });
+
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
@@ -70,8 +89,11 @@ const Debate = () => {
       });
     }, 1000);
 
-    return () => clearInterval(timer);
-  }, []);
+    return () => {
+      clearInterval(timer);
+      socket.disconnect();
+    };
+  }, [debateId]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -79,43 +101,33 @@ const Debate = () => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (!currentMessage.trim() || !isDebateActive) return;
 
+    const messageData = {
+      debate_id: debateId,
+      sender_id: user?.id,
+      content: currentMessage,
+    };
+
+    // optimistic update
     const newMessage: Message = {
       id: Date.now().toString(),
       content: currentMessage,
       sender: 'user',
       timestamp: new Date(),
+      sender_type: 'user',
     };
-
     setMessages(prev => [...prev, newMessage]);
     setCurrentMessage('');
 
-    // Simulate opponent response (for AI or real opponent)
-    if (opponent.isAI) {
-      setIsTyping(true);
-      setTimeout(() => {
-        const aiResponses = [
-          "I understand your point, but consider the broader implications of your argument. The evidence suggests otherwise.",
-          "That's an interesting perspective, however, statistical data contradicts your claim about this issue.",
-          "While your argument has merit, you're overlooking several key factors that fundamentally change the discussion.",
-          "I appreciate your viewpoint, but your reasoning contains logical fallacies that undermine your position.",
-          "Your point is valid to some extent, but the real-world applications tell a different story entirely.",
-          "I see where you're coming from, but the scientific consensus actually supports the opposite conclusion.",
-        ];
 
-        const response: Message = {
-          id: (Date.now() + 1).toString(),
-          content: aiResponses[Math.floor(Math.random() * aiResponses.length)],
-          sender: 'opponent',
-          timestamp: new Date(),
-        };
-
-        setMessages(prev => [...prev, response]);
-        setIsTyping(false);
-      }, 2000 + Math.random() * 3000);
-    }
+    const endpoint = opponent.isAI ? 'ai-message' : 'messages';
+    await fetch(`http://localhost:8000/debate/${debateId}/${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(messageData),
+    });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -233,18 +245,18 @@ const Debate = () => {
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex ${message.sender_type === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <Card className={`max-w-[70%] p-4 ${
-                  message.sender === 'user'
+                  message.sender_type === 'user'
                     ? 'bg-gradient-primary text-primary-foreground'
                     : 'bg-gradient-card border-border/50'
                 }`}>
                   <p className="text-sm leading-relaxed">{message.content}</p>
                   <p className={`text-xs mt-2 opacity-70 ${
-                    message.sender === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                    message.sender_type === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'
                   }`}>
-                    {message.timestamp.toLocaleTimeString()}
+                    {new Date(message.timestamp).toLocaleTimeString()}
                   </p>
                 </Card>
               </div>
