@@ -28,6 +28,8 @@ fastapi_app.add_middleware(
 @fastapi_app.middleware("http")
 async def log_requests(request, call_next):
     print(f"Incoming request: {request.method} {request.url}")
+    if request.method == "OPTIONS":
+        return await call_next(request)
     response = await call_next(request)
     return response
 
