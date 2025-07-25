@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from . import models, schemas, database
 from sqlalchemy.orm import Session
 import os
-SECRET_KEY = os.getenv("SECRET_KEY", "testsecret")
+SECRET_KEY = os.getenv("JWT_SECRET", "testsecret")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
