@@ -58,6 +58,17 @@ async def challenge_user(sid, data):
     topic = data.get('topic')
 
     if opponent_id == 'ai':
+        with Session(bind=database.get_db.engine) as db:
+            # Create a new debate
+            db_debate = models.Debate(
+                user_id=challenger['id'],
+                topic=topic,
+                stance="pro"  # Add a default stance
+            )
+            db.add(db_debate)
+            db.commit()
+            db.refresh(db_debate)
+            debate_id = db_debate.id
         # Create an AI opponent
         ai_opponent = {
             'id': 'ai',
@@ -65,7 +76,7 @@ async def challenge_user(sid, data):
             'elo': 1200,
             'is_ai': True
         }
-        await sio.emit('challenge_accepted', {'opponent': ai_opponent, 'topic': topic}, room=sid)
+        await sio.emit('challenge_accepted', {'opponent': ai_opponent, 'topic': topic, 'debateId': debate_id}, room=sid)
     elif isinstance(opponent_id, str) and opponent_id in online_users:
         opponent_sid = online_users[opponent_id]['sid']
         await sio.emit('challenge_received', {'challenger': challenger, 'topic': topic}, room=opponent_sid)
@@ -80,12 +91,24 @@ async def accept_challenge(sid, data):
     opponent = data.get('opponent')
     topic = data.get('topic')
 
+    with Session(bind=database.get_db.engine) as db:
+        # Create a new debate
+        db_debate = models.Debate(
+            user_id=challenger_id,
+            topic=topic,
+            stance="pro"  # Add a default stance
+        )
+        db.add(db_debate)
+        db.commit()
+        db.refresh(db_debate)
+        debate_id = db_debate.id
+
     if isinstance(challenger_id, str) and challenger_id in online_users:
         challenger_sid = online_users[challenger_id]['sid']
-        await sio.emit('challenge_accepted', {'opponent': opponent, 'topic': topic}, room=challenger_sid)
+        await sio.emit('challenge_accepted', {'opponent': opponent, 'topic': topic, 'debateId': debate_id}, room=challenger_sid)
     elif isinstance(challenger_id, int) and str(challenger_id) in online_users:
         challenger_sid = online_users[str(challenger_id)]['sid']
-        await sio.emit('challenge_accepted', {'opponent': opponent, 'topic': topic}, room=challenger_sid)
+        await sio.emit('challenge_accepted', {'opponent': opponent, 'topic': topic, 'debateId': debate_id}, room=challenger_sid)
 
 
 @sio.event
