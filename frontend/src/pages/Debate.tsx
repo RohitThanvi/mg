@@ -40,6 +40,7 @@ const Debate = () => {
   const [timeLeft, setTimeLeft] = useState(900); // 15 minutes in seconds
   const [isDebateActive, setIsDebateActive] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
+  const [initialMessagesFetched, setInitialMessagesFetched] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const opponent: Opponent = location.state?.opponent || { 
@@ -63,9 +64,14 @@ const Debate = () => {
 
   useEffect(() => {
     // Fetch initial messages
-    fetch(`http://localhost:8000/debate/${debateId}/messages`)
-      .then(res => res.json())
-      .then(data => setMessages(data.map((m: any) => ({...m, sender: m.sender_type}))));
+    if (!initialMessagesFetched) {
+      fetch(`http://localhost:8000/debate/${debateId}/messages`)
+        .then(res => res.json())
+        .then(data => {
+          setMessages(data.map((m: any) => ({...m, sender: m.sender_type})));
+          setInitialMessagesFetched(true);
+        });
+    }
 
     // Setup socket listeners
     socket.on('connect', () => {

@@ -149,6 +149,7 @@ async def user_message(sid, data):
 @sio.event
 async def end_debate(sid, data):
     debate_id = data.get('debate_id')
+    print(f"Ending debate with ID: {debate_id}")
     with Session(bind=database.get_db.engine) as db:
         messages = db.query(models.Message).filter(models.Message.debate_id == debate_id).all()
         winner = evaluate_debate(messages)
