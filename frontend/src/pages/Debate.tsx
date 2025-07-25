@@ -101,7 +101,7 @@ const Debate = () => {
       clearInterval(timer);
       socket.disconnect();
     };
-  }, [debateId]);
+  }, []);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
