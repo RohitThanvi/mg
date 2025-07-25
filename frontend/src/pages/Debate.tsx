@@ -57,7 +57,8 @@ const Debate = () => {
     scrollToBottom();
   }, [messages]);
 
-  const debateId = location.state?.debateId || '1';
+  const debateId = parseInt(location.state?.debateId || '1', 10);
+  console.log('Debate ID:', debateId);
   const socket = io('http://localhost:8000');
 
   useEffect(() => {
