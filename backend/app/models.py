@@ -26,6 +26,8 @@ class Debate(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     topic = Column(String, nullable=False)
     stance = Column(String, nullable=False)
+    winner = Column(String, nullable=True)
+    timestamp = Column(DateTime, default=datetime.utcnow)
 
     user = relationship("User", back_populates="debates")
     messages = relationship("Message", back_populates="debate")
