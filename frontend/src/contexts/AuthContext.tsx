@@ -61,9 +61,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initAuth();
   }, [token]);
 
-  const login = async (email: string, password: string) => {
+  const login = async (username: string, password: string) => {
     const formData = new FormData();
-    formData.append('username', email); // FastAPI OAuth2 uses 'username'
+    formData.append('username', username); // FastAPI OAuth2 uses 'username'
     formData.append('password', password);
 
     const response = await fetch(`${API_BASE}/login`, {
@@ -96,22 +96,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const register = async (username: string, email: string, password: string) => {
-    const response = await fetch(`${API_BASE}/register`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ username, email, password }),
-    });
+  const response = await fetch(`${API_BASE}/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ username, email, password }),
+  });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || 'Registration failed');
-    }
+  if (!response.ok) {
+  const errorText = await response.text();  // safer than json sometimes
+  console.error('Registration failed:', errorText);
+  throw new Error(errorText);
+}
 
-    // Auto login after registration
-    await login(email, password);
-  };
+  // Auto login after successful register
+  await login(username, password);
+};
+
 
   const logout = () => {
     localStorage.removeItem('token');
