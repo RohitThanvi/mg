@@ -2,6 +2,8 @@ from .socketio_instance import sio
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from . import database, models, schemas
+from .ai import get_ai_response
+from .evaluation import evaluate_debate
 
 router = APIRouter()
 
@@ -95,3 +97,80 @@ async def decline_challenge(sid, data):
     elif isinstance(challenger_id, int) and str(challenger_id) in online_users:
         challenger_sid = online_users[str(challenger_id)]['sid']
         await sio.emit('challenge_declined', {}, room=challenger_sid)
+
+@sio.event
+async def user_message(sid, data):
+    print(f"Received user message: {data}")
+    debate_id = data.get('debate_id')
+    user_id = data.get('user_id')
+    content = data.get('content')
+
+    # Use a database session from the pool
+    with Session(bind=database.get_db.engine) as db:
+        # 1. Save user's message
+        user_message = models.Message(
+            content=content,
+            user_id=user_id,
+            debate_id=debate_id,
+            sender_type='user'
+        )
+        db.add(user_message)
+        db.commit()
+        db.refresh(user_message)
+
+        # Optionally, emit the user message back to the room if needed
+        # await sio.emit('new_message', schemas.MessageOut.from_orm(user_message).dict())
+
+    # 2. Notify clients that AI is "typing"
+    await sio.emit('ai_typing', {'is_typing': True, 'debateId': debate_id})
+
+    # 3. Get AI response
+    ai_prompt = f"The user in a debate said: '{content}'. Respond to this argument."
+    ai_content = get_ai_response(ai_prompt)
+
+    # 4. Notify clients that AI is done "typing"
+    await sio.emit('ai_typing', {'is_typing': False, 'debateId': debate_id})
+
+    # 5. Save AI's message
+    with Session(bind=database.get_db.engine) as db:
+        ai_message = models.Message(
+            content=ai_content,
+            user_id=None,  # Or a specific AI user ID
+            debate_id=debate_id,
+            sender_type='ai'
+        )
+        db.add(ai_message)
+        db.commit()
+        db.refresh(ai_message)
+
+        # 6. Broadcast AI's message to the room
+        await sio.emit('new_message', schemas.MessageOut.from_orm(ai_message).dict())
+
+@sio.event
+async def end_debate(sid, data):
+    debate_id = data.get('debate_id')
+    with Session(bind=database.get_db.engine) as db:
+        messages = db.query(models.Message).filter(models.Message.debate_id == debate_id).all()
+        winner = evaluate_debate(messages)
+
+        user_id = None
+        for message in messages:
+            if message.sender_type == 'user':
+                user_id = message.user_id
+                break
+
+        if user_id:
+            user = db.query(models.User).filter(models.User.id == user_id).first()
+            if winner == 'user':
+                user.elo += 10
+                user.mind_tokens += 5
+            elif winner == 'ai':
+                user.elo -= 10
+            db.commit()
+
+        # Save debate result
+        db_debate = db.query(models.Debate).filter(models.Debate.id == debate_id).first()
+        db_debate.winner = winner
+        db.commit()
+
+        await sio.emit('debate_ended', {'winner': winner}, room=sid)

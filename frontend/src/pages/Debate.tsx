@@ -72,6 +72,7 @@ const Debate = () => {
     });
 
     socket.on('new_message', (message: any) => {
+      console.log('Received new message:', message);
       setMessages(prev => [...prev, {...message, sender: message.sender_type}]);
     });
 
