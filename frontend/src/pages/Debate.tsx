@@ -114,6 +114,7 @@ const Debate = () => {
   };
 
   const sendMessage = async () => {
+    console.log("Sending message...");
     if (!currentMessage.trim() || !isDebateActive) return;
 
     const messageData = {

@@ -42,4 +42,20 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(dat
 def read_users_me(current_user: models.User = Depends(auth.get_current_user)):
     return current_user
 
+@router.post("/test-user")
+def create_test_user(db: Session = Depends(database.get_db)):
+    user = db.query(models.User).filter(models.User.email == "test@test.com").first()
+    if user:
+        return {"message": "Test user already exists."}
+
+    hashed_password = auth.get_password_hash("test")
+    new_user = models.User(
+        username="test",
+        email="test@test.com",
+        hashed_password=hashed_password
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
 
