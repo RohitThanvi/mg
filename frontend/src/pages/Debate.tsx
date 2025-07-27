@@ -65,7 +65,11 @@ const Debate = () => {
   useEffect(() => {
     // Fetch initial messages
     if (!initialMessagesFetched) {
-      fetch(`http://localhost:8000/debate/${debateId}/messages`)
+      fetch(`http://localhost:8000/debate/${debateId}/messages`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      })
         .then(res => res.json())
         .then(data => {
           setMessages(data.map((m: any) => ({...m, sender: m.sender_type})));
