@@ -137,7 +137,10 @@ const Debate = () => {
       // Standard message for human opponent
       await fetch(`http://localhost:8000/debate/${debateId}/messages`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
         body: JSON.stringify(messageData),
       });
     }
