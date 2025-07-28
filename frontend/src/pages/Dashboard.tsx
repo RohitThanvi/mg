@@ -55,7 +55,7 @@ const Dashboard = () => {
           fetch('http://localhost:8000/leaderboard/'),
           fetch('http://localhost:8000/gamification/badges'),
           fetch('http://localhost:8000/gamification/streaks', {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
           }),
         ]);
 
@@ -120,6 +120,9 @@ const Dashboard = () => {
           <div className="flex items-center space-x-4">
             <Link to="/leaderboard">
               <Button variant="ghost">Leaderboard</Button>
+            </Link>
+            <Link to="/forums">
+              <Button variant="ghost">Forums</Button>
             </Link>
             <div className="text-right">
               <p className="text-sm text-muted-foreground">Welcome back,</p>
