@@ -51,17 +51,24 @@ def get_messages_route(debate_id: int, db: Session = Depends(get_db)):
         .all()
     )
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
 @router.post("/{debate_id}/ai-message", response_model=schemas.MessageOut)
 async def create_ai_message_route(debate_id: int, message: schemas.MessageCreate, db: Session = Depends(get_db)):
+    logging.info(f"Received AI message request for debate {debate_id}")
     # 1. Save user's message
     user_message = models.Message(**message.dict(), debate_id=debate_id)
     db.add(user_message)
     db.commit()
     db.refresh(user_message)
+    logging.info(f"User message saved: {user_message.id}")
 
     # 2. Get AI response
     ai_prompt = f"The user in a debate said: '{message.content}'. Respond to this argument."
     ai_content = get_ai_response(ai_prompt)
+    logging.info(f"AI response generated: {ai_content}")
 
     # 3. Save AI's message
     ai_message = models.Message(
@@ -73,5 +80,6 @@ async def create_ai_message_route(debate_id: int, message: schemas.MessageCreate
     db.add(ai_message)
     db.commit()
     db.refresh(ai_message)
+    logging.info(f"AI message saved: {ai_message.id}")
 
     return ai_message
