@@ -63,18 +63,25 @@ const Debate = () => {
   const socket = io('http://localhost:8000');
 
   useEffect(() => {
+    console.log("Setting up debate component...");
     // Fetch initial messages
     if (!initialMessagesFetched) {
+      console.log("Fetching initial messages...");
       fetch(`http://localhost:8000/debate/${debateId}/messages`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
       })
-        .then(res => res.json())
+        .then(res => {
+          console.log("Initial messages response:", res);
+          return res.json();
+        })
         .then(data => {
+          console.log("Initial messages data:", data);
           setMessages(data.map((m: any) => ({...m, sender: m.sender_type})));
           setInitialMessagesFetched(true);
-        });
+        })
+        .catch(error => console.error("Error fetching initial messages:", error));
     }
 
     // Setup socket listeners
@@ -114,7 +121,7 @@ const Debate = () => {
   };
 
   const sendMessage = async () => {
-    console.log("Sending message...");
+    console.log("Sending message...", { currentMessage, isDebateActive, opponent });
     if (!currentMessage.trim() || !isDebateActive) return;
 
     const messageData = {
@@ -136,8 +143,17 @@ const Debate = () => {
     setCurrentMessage('');
 
     if (opponent.isAI) {
-      // Emit event to backend for AI response
-      socket.emit('user_message', messageData);
+      // Use the new API route for AI response
+      const response = await fetch(`http://localhost:8000/debate/${debateId}/ai-message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(messageData),
+      });
+      const aiMessage = await response.json();
+      setMessages(prev => [...prev, {...aiMessage, sender: 'ai'}]);
     } else {
       // Standard message for human opponent
       await fetch(`http://localhost:8000/debate/${debateId}/messages`, {

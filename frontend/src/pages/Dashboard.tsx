@@ -38,12 +38,14 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [debates, setDebates] = useState<DebateHistory[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [badges, setBadges] = useState([]);
+  const [streaks, setStreaks] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [statsRes, historyRes, leaderboardRes] = await Promise.all([
+        const [statsRes, historyRes, leaderboardRes, badgesRes, streaksRes] = await Promise.all([
           fetch('http://localhost:8000/dashboard/stats', {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
           }),
@@ -51,14 +53,22 @@ const Dashboard = () => {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
           }),
           fetch('http://localhost:8000/leaderboard/'),
+          fetch('http://localhost:8000/gamification/badges'),
+          fetch('http://localhost:8000/gamification/streaks', {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+          }),
         ]);
 
         const stats = await statsRes.json();
         const history = await historyRes.json();
         const leaderboard = await leaderboardRes.json();
+        const badges = await badgesRes.json();
+        const streaks = await streaksRes.json();
 
         setDebates(history);
         setLeaderboard(leaderboard.map((user, index) => ({ ...user, rank: index + 1 })));
+        setBadges(badges);
+        setStreaks(streaks);
 
         // This is a bit of a hack, since the stats are not part of the user object
         // In a real app, you might want to update the user object in the AuthContext
@@ -196,9 +206,9 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Recent Debates */}
-          <Card className="bg-gradient-card border-border/50 p-6">
+          <Card className="bg-gradient-card border-border/50 p-6 lg:col-span-2">
             <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center">
               <Clock className="mr-2 h-5 w-5 text-cyber-blue" />
               Recent Debates
@@ -224,39 +234,44 @@ const Dashboard = () => {
             </div>
           </Card>
 
-          {/* Leaderboard */}
-          <Card className="bg-gradient-card border-border/50 p-6">
-            <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center">
-              <Trophy className="mr-2 h-5 w-5 text-cyber-gold" />
-              Leaderboard
-            </h3>
-            <div className="space-y-3">
-              {leaderboard.map((entry) => (
-                <div 
-                  key={entry.rank} 
-                  className={`flex items-center justify-between p-3 rounded-lg ${
-                    entry.username === user?.username ? 'bg-cyber-red/10 border border-cyber-red/30' : 'bg-muted/20'
-                  }`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                      entry.rank === 1 ? 'bg-cyber-gold text-background' :
-                      entry.rank === 2 ? 'bg-gray-400 text-background' :
-                      entry.rank === 3 ? 'bg-amber-600 text-background' :
-                      'bg-muted text-muted-foreground'
-                    }`}>
-                      {entry.rank}
-                    </span>
-                    <span className="font-medium text-foreground">{entry.username}</span>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-foreground">{entry.elo} ELO</p>
-                    <p className="text-xs text-muted-foreground">{entry.mind_tokens} tokens</p>
-                  </div>
+          {/* Gamification */}
+          <div className="space-y-8">
+            {/* Streaks */}
+            <Card className="bg-gradient-card border-border/50 p-6">
+              <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center">
+                <TrendingUp className="mr-2 h-5 w-5 text-cyber-green" />
+                Streaks
+              </h3>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Current Streak</span>
+                  <span className="font-bold text-foreground">{streaks?.current_streak || 0}</span>
                 </div>
-              ))}
-            </div>
-          </Card>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Max Streak</span>
+                  <span className="font-bold text-foreground">{streaks?.max_streak || 0}</span>
+                </div>
+              </div>
+            </Card>
+
+            {/* Badges */}
+            <Card className="bg-gradient-card border-border/50 p-6">
+              <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center">
+                <Trophy className="mr-2 h-5 w-5 text-cyber-gold" />
+                Badges
+              </h3>
+              <div className="flex flex-wrap gap-4">
+                {badges.map((badge) => (
+                  <div key={badge.id} className="text-center">
+                    <div className="p-2 bg-muted/20 rounded-lg">
+                      <Trophy className="h-8 w-8 text-cyber-gold" />
+                    </div>
+                    <p className="text-xs mt-1 text-muted-foreground">{badge.name}</p>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

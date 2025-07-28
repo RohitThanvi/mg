@@ -20,10 +20,61 @@ class UserOut(BaseModel):
     class Config:
         orm_mode = True
 
+class Forum(BaseModel):
+    id: int
+    name: str
+    description: str
+
+    class Config:
+        orm_mode = True
+
+class Thread(BaseModel):
+    id: int
+    title: str
+    forum_id: int
+    user_id: int
+
+    class Config:
+        orm_mode = True
+
+class ThreadCreate(BaseModel):
+    title: str
+    forum_id: int
+
+class Post(BaseModel):
+    id: int
+    content: str
+    thread_id: int
+    user_id: int
+
+    class Config:
+        orm_mode = True
+
+class PostCreate(BaseModel):
+    content: str
+    thread_id: int
+
 class UserStats(BaseModel):
     debates_won: int
     debates_lost: int
     debates_competed: int
+
+class Badge(BaseModel):
+    id: int
+    name: str
+    description: str
+
+    class Config:
+        orm_mode = True
+
+class Streak(BaseModel):
+    id: int
+    user_id: int
+    current_streak: int
+    max_streak: int
+
+    class Config:
+        orm_mode = True
 
 # ------------------ AUTH TOKEN ------------------ #
 class Token(BaseModel):
