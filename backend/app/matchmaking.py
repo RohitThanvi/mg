@@ -192,13 +192,15 @@ async def end_debate(sid, data):
             if winner == 'user':
                 user.elo += 10
                 user.mind_tokens += 5
+                db_debate = db.query(models.Debate).filter(models.Debate.id == debate_id).first()
+                db_debate.winner = user.username
             elif winner == 'ai':
                 user.elo -= 10
+                db_debate = db.query(models.Debate).filter(models.Debate.id == debate_id).first()
+                db_debate.winner = "AI"
+            else:
+                db_debate = db.query(models.Debate).filter(models.Debate.id == debate_id).first()
+                db_debate.winner = "draw"
             db.commit()
-
-        # Save debate result
-        db_debate = db.query(models.Debate).filter(models.Debate.id == debate_id).first()
-        db_debate.winner = winner
-        db.commit()
 
         await sio.emit('debate_ended', {'winner': winner}, room=sid)

@@ -21,12 +21,11 @@ def get_ai_response(prompt: str) -> str:
         ]
     }
 
-    response = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=body)
-
-    if response.status_code == 200:
+    try:
+        response = requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=body)
+        response.raise_for_status()
         logging.info("AI response received successfully.")
         return response.json()['choices'][0]['message']['content']
-    else:
-        logging.error(f"AI failed to respond with status code: {response.status_code}")
-        logging.error(f"Response: {response.text}")
+    except requests.exceptions.RequestException as e:
+        logging.error(f"An error occurred while calling the Groq API: {e}")
         return "AI failed to respond."
