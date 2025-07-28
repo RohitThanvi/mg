@@ -144,7 +144,7 @@ const Debate = () => {
 
     if (opponent.isAI) {
       // Use the new API route for AI response
-      const response = await fetch(`http://localhost:8000/debate/${debateId}/ai-message`, {
+      const response = await fetch(`http://localhost:8000/ai-debate/${debateId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -155,15 +155,8 @@ const Debate = () => {
       const aiMessage = await response.json();
       setMessages(prev => [...prev, {...aiMessage, sender: 'ai'}]);
     } else {
-      // Standard message for human opponent
-      await fetch(`http://localhost:8000/debate/${debateId}/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify(messageData),
-      });
+      // Emit event to backend for human opponent
+      socket.emit('human_message', { ...messageData, opponent_id: opponent.id });
     }
   };
 

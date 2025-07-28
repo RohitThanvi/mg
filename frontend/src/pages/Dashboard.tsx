@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
@@ -118,6 +118,9 @@ const Dashboard = () => {
             </h1>
           </div>
           <div className="flex items-center space-x-4">
+            <Link to="/leaderboard">
+              <Button variant="ghost">Leaderboard</Button>
+            </Link>
             <div className="text-right">
               <p className="text-sm text-muted-foreground">Welcome back,</p>
               <p className="font-semibold text-foreground">{user?.username}</p>
