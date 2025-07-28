@@ -45,3 +45,48 @@ class Message(Base):
 
     debate = relationship("Debate", back_populates="messages")
     sender = relationship("User", back_populates="messages")
+
+class Badge(Base):
+    __tablename__ = "badges"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True, nullable=False)
+    description = Column(String, nullable=False)
+
+class UserBadge(Base):
+    __tablename__ = "user_badges"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    badge_id = Column(Integer, ForeignKey("badges.id"), nullable=False)
+
+class Streak(Base):
+    __tablename__ = "streaks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    current_streak = Column(Integer, default=0)
+    max_streak = Column(Integer, default=0)
+
+class Forum(Base):
+    __tablename__ = "forums"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True, nullable=False)
+    description = Column(String, nullable=False)
+
+class Thread(Base):
+    __tablename__ = "threads"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True, nullable=False)
+    forum_id = Column(Integer, ForeignKey("forums.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+class Post(Base):
+    __tablename__ = "posts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    content = Column(Text, nullable=False)
+    thread_id = Column(Integer, ForeignKey("threads.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)

@@ -121,9 +121,13 @@ async def decline_challenge(sid, data):
         challenger_sid = online_users[str(challenger_id)]['sid']
         await sio.emit('challenge_declined', {}, room=challenger_sid)
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
 @sio.event
 async def user_message(sid, data):
-    print(f"Received user message: {data}")
+    logging.info(f"Received user message: {data}")
     debate_id = data.get('debate_id')
     user_id = data.get('user_id')
     content = data.get('content')
