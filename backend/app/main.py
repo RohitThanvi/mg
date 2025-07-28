@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import auth_routes, leaderboard_routes, dashboard_routes, token_routes, gamification_routes, forum_routes
+from .routers import auth_routes, leaderboard_routes, dashboard_routes, token_routes, gamification_routes, forum_routes, ai_debate_routes, analysis_routes
 from . import debate, matchmaking
 from .socketio_instance import sio
 import socketio
@@ -41,6 +41,8 @@ fastapi_app.include_router(matchmaking.router)
 fastapi_app.include_router(token_routes.router)
 fastapi_app.include_router(gamification_routes.router)
 fastapi_app.include_router(forum_routes.router)
+fastapi_app.include_router(ai_debate_routes.router)
+fastapi_app.include_router(analysis_routes.router)
 
 # Combine Socket.IO and FastAPI into a single ASGI app
 app = socketio.ASGIApp(sio, other_asgi_app=fastapi_app)

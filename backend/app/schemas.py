@@ -54,6 +54,9 @@ class PostCreate(BaseModel):
     content: str
     thread_id: int
 
+class Analysis(BaseModel):
+    analysis: str
+
 class UserStats(BaseModel):
     debates_won: int
     debates_lost: int

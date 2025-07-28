@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
@@ -338,6 +338,12 @@ const Result = () => {
                   <Home className="mr-2 h-5 w-5" />
                   Return to Base
                 </Button>
+                <Link to={`/analysis/${location.state?.debateId}`} className="w-full">
+                  <Button variant="secondary" size="lg" className="w-full">
+                    <Brain className="mr-2 h-5 w-5" />
+                    View Analysis
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>

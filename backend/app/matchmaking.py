@@ -126,8 +126,8 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 @sio.event
-async def user_message(sid, data):
-    logging.info(f"Received user message: {data}")
+async def human_message(sid, data):
+    logging.info(f"Received human message: {data}")
     debate_id = data.get('debate_id')
     user_id = data.get('user_id')
     content = data.get('content')
@@ -145,33 +145,11 @@ async def user_message(sid, data):
         db.commit()
         db.refresh(user_message)
 
-        # Optionally, emit the user message back to the room if needed
-        # await sio.emit('new_message', schemas.MessageOut.from_orm(user_message).dict())
-
-    # 2. Notify clients that AI is "typing"
-    await sio.emit('ai_typing', {'is_typing': True, 'debateId': debate_id})
-
-    # 3. Get AI response
-    ai_prompt = f"The user in a debate said: '{content}'. Respond to this argument."
-    ai_content = get_ai_response(ai_prompt)
-
-    # 4. Notify clients that AI is done "typing"
-    await sio.emit('ai_typing', {'is_typing': False, 'debateId': debate_id})
-
-    # 5. Save AI's message
-    with Session(bind=database.get_db.engine) as db:
-        ai_message = models.Message(
-            content=ai_content,
-            user_id=None,  # Or a specific AI user ID
-            debate_id=debate_id,
-            sender_type='ai'
-        )
-        db.add(ai_message)
-        db.commit()
-        db.refresh(ai_message)
-
-        # 6. Broadcast AI's message to the room
-        await sio.emit('new_message', schemas.MessageOut.from_orm(ai_message).dict())
+        # 2. Broadcast the message to the other user in the debate
+        opponent_id = data.get('opponent_id')
+        if opponent_id in online_users:
+            opponent_sid = online_users[opponent_id]['sid']
+            await sio.emit('new_message', schemas.MessageOut.from_orm(user_message).dict(), room=opponent_sid)
 
 @sio.event
 async def end_debate(sid, data):
