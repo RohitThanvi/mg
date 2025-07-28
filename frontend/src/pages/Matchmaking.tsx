@@ -61,12 +61,31 @@ const Matchmaking = () => {
   }, [user, navigate]);
 
   const handleChallenge = (opponent: OnlineUser) => {
-    const topic = getRandomTopic();
-    socket.emit('challenge_user', { challenger: user, opponentId: opponent.id, topic });
-    toast({
-      title: `Challenge sent to ${opponent.username}`,
-      description: 'Waiting for them to accept...',
-    });
+    if (opponent.id === 'human') {
+      // Find a human opponent
+      const humanOpponent = onlineUsers.find(onlineUser => onlineUser.id !== user?.id);
+      if (humanOpponent) {
+        const topic = getRandomTopic();
+        socket.emit('challenge_user', { challenger: user, opponentId: humanOpponent.id, topic });
+        toast({
+          title: `Challenge sent to ${humanOpponent.username}`,
+          description: 'Waiting for them to accept...',
+        });
+      } else {
+        toast({
+          title: 'No human opponents available',
+          description: 'Please try again later.',
+          variant: 'destructive',
+        });
+      }
+    } else {
+      const topic = getRandomTopic();
+      socket.emit('challenge_user', { challenger: user, opponentId: opponent.id, topic });
+      toast({
+        title: `Challenge sent to ${opponent.username}`,
+        description: 'Waiting for them to accept...',
+      });
+    }
   };
 
   const acceptChallenge = (challenger: OnlineUser, topic: string) => {
@@ -109,6 +128,10 @@ const Matchmaking = () => {
             <Button onClick={() => handleChallenge({ id: 'ai', username: 'AI Bot', elo: 1200 })} size="lg" className="w-full">
               <Sword className="mr-2 h-4 w-4" />
               Challenge AI Bot
+            </Button>
+            <Button onClick={() => handleChallenge({ id: 'human', username: 'Human', elo: 1200 })} size="lg" className="w-full">
+              <Sword className="mr-2 h-4 w-4" />
+              Challenge Human
             </Button>
             {onlineUsers
               .filter((onlineUser) => onlineUser.id !== user?.id)
