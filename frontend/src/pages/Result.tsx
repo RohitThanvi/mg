@@ -56,66 +56,40 @@ const Result = () => {
   const duration: number = location.state?.duration || 0;
 
   useEffect(() => {
-    // Simulate AI analysis of the debate
-    const analyzeDebate = async () => {
+    const fetchResults = async () => {
       setIsLoading(true);
-      
-      // Simulate processing time
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // Generate realistic results based on message count and opponent type
-      const userMessages = messages.filter(m => m.sender === 'user');
-      const baseScore = Math.min(50 + userMessages.length * 5, 100);
-      const scoreVariation = Math.random() * 20 - 10;
-      const finalScore = Math.max(20, Math.min(100, baseScore + scoreVariation));
-      
-      const isWin = finalScore >= 70;
-      const isDraw = finalScore >= 60 && finalScore < 70;
-      
-      const eloChange = isWin ? 
-        Math.floor(Math.random() * 30) + 10 : 
-        isDraw ? 
-        Math.floor(Math.random() * 10) - 5 :
-        -(Math.floor(Math.random() * 20) + 5);
-      
-      const tokensEarned = isWin ? 
-        Math.floor(Math.random() * 100) + 50 :
-        isDraw ?
-        Math.floor(Math.random() * 50) + 25 :
-        Math.floor(Math.random() * 30) + 10;
-
-      const feedbacks = [
-        "Excellent logical structure and compelling evidence presentation. Your arguments flowed naturally and built upon each other effectively.",
-        "Strong persuasive techniques and good use of examples. Consider strengthening your counter-argument responses for even better results.",
-        "Good foundation but could benefit from more concrete evidence to support your claims. Your style was engaging throughout.",
-        "Well-articulated points with clear reasoning. Work on anticipating opponent objections to make your arguments more robust.",
-        "Impressive debate performance with strong logical flow. Your evidence selection was particularly effective in supporting your position."
-      ];
-
-      setResult({
-        score: Math.round(finalScore),
-        result: isWin ? 'win' : isDraw ? 'draw' : 'loss',
-        eloChange,
-        tokensEarned,
-        feedback: {
-          logic: Math.floor(finalScore * 0.8 + Math.random() * 20),
-          persuasion: Math.floor(finalScore * 0.9 + Math.random() * 20),
-          evidence: Math.floor(finalScore * 0.7 + Math.random() * 30),
-          style: Math.floor(finalScore * 0.85 + Math.random() * 20),
-          overall: feedbacks[Math.floor(Math.random() * feedbacks.length)]
-        }
-      });
-      
-      setIsLoading(false);
-      
-      toast({
-        title: "Analysis complete!",
-        description: "Your debate performance has been evaluated.",
-      });
+      try {
+        const response = await fetch(`http://localhost:8000/debate/${location.state?.debateId}/results`);
+        const data = await response.json();
+        setResult({
+          score: 0, // This will be removed later
+          result: data.winner,
+          eloChange: data.elo_change,
+          tokensEarned: data.tokens_earned,
+          feedback: {
+            logic: 0,
+            persuasion: 0,
+            evidence: 0,
+            style: 0,
+            overall: "AI analysis is not yet implemented."
+          }
+        });
+      } catch (error) {
+        console.error("Error fetching results:", error);
+        toast({
+          title: "Error",
+          description: "Could not fetch debate results.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    analyzeDebate();
-  }, [messages]);
+    if (location.state?.debateId) {
+      fetchResults();
+    }
+  }, [location.state?.debateId]);
 
   const formatDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

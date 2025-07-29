@@ -46,8 +46,8 @@ const Matchmaking = () => {
     });
 
     // Listen for when a challenge is accepted
-    socket.on('challenge_accepted', ({ opponent, topic }) => {
-      navigate('/debate', { state: { opponent, topic } });
+    socket.on('challenge_accepted', ({ opponent, topic, debateId }) => {
+      navigate('/debate', { state: { opponent, topic, debateId } });
     });
 
     return () => {
@@ -90,7 +90,6 @@ const Matchmaking = () => {
 
   const acceptChallenge = (challenger: OnlineUser, topic: string) => {
     socket.emit('accept_challenge', { challengerId: challenger.id, opponent: user, topic });
-    navigate('/debate', { state: { opponent: challenger, topic } });
   };
 
   const declineChallenge = (challenger: OnlineUser) => {

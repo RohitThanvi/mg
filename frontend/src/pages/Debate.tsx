@@ -87,6 +87,7 @@ const Debate = () => {
     // Setup socket listeners
     socket.on('connect', () => {
       console.log('Connected to socket server');
+      socket.emit('join_debate', { debate_id: debateId });
     });
 
     socket.on('new_message', (message: any) => {
@@ -129,15 +130,6 @@ const Debate = () => {
       sender_type: 'user',
     };
 
-    // Optimistic update
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      content: currentMessage,
-      sender: 'user',
-      timestamp: new Date(),
-      sender_type: 'user',
-    };
-    setMessages(prev => [...prev, newMessage]);
     setCurrentMessage('');
 
     if (opponent.isAI) {
@@ -154,7 +146,7 @@ const Debate = () => {
       setMessages(prev => [...prev, {...aiMessage, sender: 'ai'}]);
     } else {
       // Emit event to backend for human opponent
-      socket.emit('human_message', { ...messageData, opponent_id: opponent.id });
+      socket.emit('human_message', { ...messageData, debate_id: debateId, user_id: user?.id });
     }
   };
 
