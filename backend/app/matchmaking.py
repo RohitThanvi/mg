@@ -126,6 +126,11 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 @sio.event
+async def join_debate(sid, data):
+    debate_id = data.get('debate_id')
+    sio.enter_room(sid, f"debate_{debate_id}")
+
+@sio.event
 async def human_message(sid, data):
     logging.info(f"Received human message: {data}")
     debate_id = data.get('debate_id')
@@ -146,10 +151,7 @@ async def human_message(sid, data):
         db.refresh(user_message)
 
         # 2. Broadcast the message to the other user in the debate
-        opponent_id = data.get('opponent_id')
-        if opponent_id in online_users:
-            opponent_sid = online_users[opponent_id]['sid']
-            await sio.emit('new_message', schemas.MessageOut.from_orm(user_message).dict(), room=opponent_sid)
+        await sio.emit('new_message', schemas.MessageOut.from_orm(user_message).dict(), room=f"debate_{debate_id}")
 
 @sio.event
 async def end_debate(sid, data):

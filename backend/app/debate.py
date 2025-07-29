@@ -51,3 +51,14 @@ def get_messages_route(debate_id: int, db: Session = Depends(get_db)):
         .all()
     )
 
+# ----------------- GET DEBATE RESULTS -----------------
+@router.get("/{debate_id}/results", response_model=schemas.DebateResult)
+def get_debate_results_route(debate_id: int, db: Session = Depends(get_db)):
+    db_debate = db.query(models.Debate).filter(models.Debate.id == debate_id).first()
+    if not db_debate:
+        raise HTTPException(status_code=404, detail="Debate not found")
+
+    messages = db.query(models.Message).filter(models.Message.debate_id == debate_id).all()
+    winner = evaluate_debate(messages)
+
+    return {"winner": winner, "elo_change": 10, "tokens_earned": 5}

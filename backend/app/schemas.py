@@ -20,6 +20,11 @@ class UserOut(BaseModel):
     class Config:
         orm_mode = True
 
+class DebateResult(BaseModel):
+    winner: str
+    elo_change: int
+    tokens_earned: int
+
 class Forum(BaseModel):
     id: int
     name: str
