@@ -12,6 +12,7 @@ from ..evaluation import evaluate_debate
 
 @router.get("/{debate_id}", response_model=schemas.Analysis)
 def get_analysis(debate_id: int, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user)):
+    print(f"Getting analysis for debate {debate_id}")
     messages = db.query(models.Message).filter(models.Message.debate_id == debate_id).all()
 
     prompt = "The following is a transcript of a debate. Please provide an analysis of the debate, including the strengths and weaknesses of each debater's arguments.\n\n"
@@ -19,6 +20,7 @@ def get_analysis(debate_id: int, db: Session = Depends(database.get_db), current
         prompt += f"{message.sender.username if message.sender else 'AI'}: {message.content}\n"
 
     analysis = get_ai_response(prompt)
+    print(f"AI analysis: {analysis}")
 
     winner = evaluate_debate(messages)
     score = 0
@@ -27,5 +29,6 @@ def get_analysis(debate_id: int, db: Session = Depends(database.get_db), current
     elif winner == 'ai':
         score = -10
 
+    print(f"Score: {score}")
 
     return {"analysis": analysis, "score": score}
