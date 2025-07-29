@@ -63,7 +63,7 @@ const Matchmaking = () => {
     };
   }, [user, navigate]);
 
-  const handleChallenge = (opponent: OnlineUser) => {
+  const handleChallenge = (socket: any, opponent: OnlineUser) => {
     if (opponent.id === 'human') {
       // Find a human opponent
       const humanOpponent = onlineUsers.find(onlineUser => onlineUser.id !== user?.id);
@@ -92,11 +92,15 @@ const Matchmaking = () => {
   };
 
   const acceptChallenge = (challenger: OnlineUser, topic: string) => {
-    socket.emit('accept_challenge', { challengerId: challenger.id, opponent: user, topic });
+    if (socket) {
+      socket.emit('accept_challenge', { challengerId: challenger.id, opponent: user, topic });
+    }
   };
 
   const declineChallenge = (challenger: OnlineUser) => {
-    socket.emit('decline_challenge', { challengerId: challenger.id });
+    if (socket) {
+      socket.emit('decline_challenge', { challengerId: challenger.id });
+    }
   };
 
   const getRandomTopic = () => {
@@ -127,11 +131,11 @@ const Matchmaking = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <Button onClick={() => handleChallenge({ id: 'ai', username: 'AI Bot', elo: 1200 })} size="lg" className="w-full">
+            <Button onClick={() => handleChallenge(socket, { id: 'ai', username: 'AI Bot', elo: 1200 })} size="lg" className="w-full">
               <Sword className="mr-2 h-4 w-4" />
               Challenge AI Bot
             </Button>
-            <Button onClick={() => handleChallenge({ id: 'human', username: 'Human', elo: 1200 })} size="lg" className="w-full">
+            <Button onClick={() => handleChallenge(socket, { id: 'human', username: 'Human', elo: 1200 })} size="lg" className="w-full">
               <Sword className="mr-2 h-4 w-4" />
               Challenge Human
             </Button>
@@ -146,7 +150,7 @@ const Matchmaking = () => {
                     <p className="font-semibold">{onlineUser.username}</p>
                     <p className="text-sm text-muted-foreground">{onlineUser.elo} ELO</p>
                   </div>
-                  <Button onClick={() => handleChallenge(onlineUser)} size="sm">
+                  <Button onClick={() => handleChallenge(socket, onlineUser)} size="sm">
                     <Sword className="mr-2 h-4 w-4" />
                     Challenge
                   </Button>

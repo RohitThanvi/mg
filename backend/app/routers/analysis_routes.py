@@ -8,6 +8,8 @@ router = APIRouter(
     tags=["Analysis"]
 )
 
+from ..evaluation import evaluate_debate
+
 @router.get("/{debate_id}", response_model=schemas.Analysis)
 def get_analysis(debate_id: int, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user)):
     messages = db.query(models.Message).filter(models.Message.debate_id == debate_id).all()
@@ -18,4 +20,12 @@ def get_analysis(debate_id: int, db: Session = Depends(database.get_db), current
 
     analysis = get_ai_response(prompt)
 
-    return {"analysis": analysis}
+    winner = evaluate_debate(messages)
+    score = 0
+    if winner == 'user':
+        score = 10
+    elif winner == 'ai':
+        score = -10
+
+
+    return {"analysis": analysis, "score": score}
