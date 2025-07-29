@@ -125,7 +125,6 @@ const Debate = () => {
     if (!currentMessage.trim() || !isDebateActive) return;
 
     const messageData = {
-      user_id: user?.id,
       content: currentMessage,
       sender_type: 'user',
     };
