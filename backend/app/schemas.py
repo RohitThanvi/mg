@@ -61,6 +61,7 @@ class PostCreate(BaseModel):
 
 class Analysis(BaseModel):
     analysis: str
+    score: int
 
 class UserStats(BaseModel):
     debates_won: int

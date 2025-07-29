@@ -130,6 +130,14 @@ const Debate = () => {
       sender_type: 'user',
     };
 
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      content: currentMessage,
+      sender: 'user',
+      timestamp: new Date(),
+      sender_type: 'user',
+    };
+    setMessages(prev => [...prev, newMessage]);
     setCurrentMessage('');
 
     if (opponent.isAI) {

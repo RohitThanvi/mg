@@ -59,19 +59,27 @@ const Result = () => {
     const fetchResults = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`http://localhost:8000/debate/${location.state?.debateId}/results`);
-        const data = await response.json();
+        const resultsResponse = await fetch(`http://localhost:8000/debate/${location.state?.debateId}/results`);
+        const resultsData = await resultsResponse.json();
+
+        const analysisResponse = await fetch(`http://localhost:8000/analysis/${location.state?.debateId}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+        const analysisData = await analysisResponse.json();
+
         setResult({
-          score: 0, // This will be removed later
-          result: data.winner,
-          eloChange: data.elo_change,
-          tokensEarned: data.tokens_earned,
+          score: analysisData.score,
+          result: resultsData.winner,
+          eloChange: resultsData.elo_change,
+          tokensEarned: resultsData.tokens_earned,
           feedback: {
             logic: 0,
             persuasion: 0,
             evidence: 0,
             style: 0,
-            overall: "AI analysis is not yet implemented."
+            overall: analysisData.analysis,
           }
         });
       } catch (error) {
