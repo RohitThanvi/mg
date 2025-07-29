@@ -56,6 +56,7 @@ async def challenge_user(sid, data):
     opponent_id = data.get('opponentId')
     challenger = data.get('challenger')
     topic = data.get('topic')
+    print(f"Challenge from {challenger['username']} to {opponent_id}")
 
     if opponent_id == 'ai':
         with Session(bind=database.get_db.engine) as db:
@@ -77,10 +78,7 @@ async def challenge_user(sid, data):
             'is_ai': True
         }
         await sio.emit('challenge_accepted', {'opponent': ai_opponent, 'topic': topic, 'debateId': debate_id}, room=sid)
-    elif isinstance(opponent_id, str) and opponent_id in online_users:
-        opponent_sid = online_users[opponent_id]['sid']
-        await sio.emit('challenge_received', {'challenger': challenger, 'topic': topic}, room=opponent_sid)
-    elif isinstance(opponent_id, int) and str(opponent_id) in online_users:
+    elif str(opponent_id) in online_users:
         opponent_sid = online_users[str(opponent_id)]['sid']
         await sio.emit('challenge_received', {'challenger': challenger, 'topic': topic}, room=opponent_sid)
 

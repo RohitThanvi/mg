@@ -29,7 +29,6 @@ def register(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
 
 @router.post("/login", response_model=schemas.Token)
 def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(database.get_db)):
-    print(f"Login attempt with username: {form.username}")
     user = auth.authenticate_user(db, form.username, form.password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
