@@ -38,6 +38,7 @@ const Register = () => {
       });
       navigate('/dashboard');
     } catch (error) {
+      console.error("Registration failed:", error);
       toast({
         title: "Registration failed",
         description: "Please try again with different credentials.",
