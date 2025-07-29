@@ -35,6 +35,7 @@ async def disconnect(sid):
 
 @sio.event
 async def user_online(sid, data):
+    print(f"User online: {data}")
     user_id = data.get('userId')
     online_users[user_id] = {
         'id': user_id,
@@ -57,6 +58,7 @@ async def challenge_user(sid, data):
     challenger = data.get('challenger')
     topic = data.get('topic')
     print(f"Challenge from {challenger['username']} to {opponent_id}")
+    print(f"Online users: {online_users}")
 
     if opponent_id == 'ai':
         with Session(bind=database.get_db.engine) as db:
@@ -80,6 +82,7 @@ async def challenge_user(sid, data):
         await sio.emit('challenge_accepted', {'opponent': ai_opponent, 'topic': topic, 'debateId': debate_id}, room=sid)
     elif str(opponent_id) in online_users:
         opponent_sid = online_users[str(opponent_id)]['sid']
+        print(f"Sending challenge to {opponent_sid}")
         await sio.emit('challenge_received', {'challenger': challenger, 'topic': topic}, room=opponent_sid)
 
 
@@ -88,6 +91,7 @@ async def accept_challenge(sid, data):
     challenger_id = data.get('challengerId')
     opponent = data.get('opponent')
     topic = data.get('topic')
+    print(f"Challenge accepted by {opponent['username']} from {challenger_id}")
 
     with Session(bind=database.get_db.engine) as db:
         # Create a new debate
@@ -101,11 +105,15 @@ async def accept_challenge(sid, data):
         db.refresh(db_debate)
         debate_id = db_debate.id
 
+    print(f"Debate created with id: {debate_id}")
+
     if isinstance(challenger_id, str) and challenger_id in online_users:
         challenger_sid = online_users[challenger_id]['sid']
+        print(f"Sending challenge accepted to {challenger_sid}")
         await sio.emit('challenge_accepted', {'opponent': opponent, 'topic': topic, 'debateId': debate_id}, room=challenger_sid)
     elif isinstance(challenger_id, int) and str(challenger_id) in online_users:
         challenger_sid = online_users[str(challenger_id)]['sid']
+        print(f"Sending challenge accepted to {challenger_sid}")
         await sio.emit('challenge_accepted', {'opponent': opponent, 'topic': topic, 'debateId': debate_id}, room=challenger_sid)
 
 

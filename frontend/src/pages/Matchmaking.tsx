@@ -23,6 +23,7 @@ const Matchmaking = () => {
   useEffect(() => {
     // Announce user's presence
     if (user) {
+      socket.connect();
       socket.emit('user_online', { userId: user.id, username: user.username, elo: user.elo });
     }
 
