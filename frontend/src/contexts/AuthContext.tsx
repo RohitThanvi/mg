@@ -11,7 +11,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (username: string, password: string) => Promise<void>;
   register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
@@ -61,9 +61,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     initAuth();
   }, [token]);
 
-  const login = async (email: string, password: string) => {
+  const login = async (username: string, password: string) => {
     const formData = new FormData();
-    formData.append('username', email); // FastAPI OAuth2 uses 'username'
+    formData.append('username', username); // FastAPI OAuth2 uses 'username'
     formData.append('password', password);
 
     const response = await fetch(`${API_BASE}/login`, {
@@ -110,7 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     // Auto login after registration
-    await login(email, password);
+    await login(username, password);
   };
 
   const logout = () => {
