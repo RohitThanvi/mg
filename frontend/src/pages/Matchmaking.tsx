@@ -13,27 +13,28 @@ interface OnlineUser {
   elo: number;
 }
 
-const socket = io('http://localhost:8000');
-
 const Matchmaking = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  const [socket, setSocket] = useState<any>(null);
 
   useEffect(() => {
+    const newSocket = io('http://localhost:8000');
+    setSocket(newSocket);
+
     // Announce user's presence
     if (user) {
-      socket.connect();
-      socket.emit('user_online', { userId: user.id, username: user.username, elo: user.elo });
+      newSocket.emit('user_online', { userId: user.id, username: user.username, elo: user.elo });
     }
 
     // Listen for the list of online users
-    socket.on('online_users', (users: OnlineUser[]) => {
+    newSocket.on('online_users', (users: OnlineUser[]) => {
       setOnlineUsers(users);
     });
 
     // Listen for debate challenges
-    socket.on('challenge_received', ({ challenger, topic }) => {
+    newSocket.on('challenge_received', ({ challenger, topic }) => {
       toast({
         title: `Debate Challenge from ${challenger.username}`,
         description: `Topic: ${topic}. Do you accept?`,
@@ -47,17 +48,18 @@ const Matchmaking = () => {
     });
 
     // Listen for when a challenge is accepted
-    socket.on('challenge_accepted', ({ opponent, topic, debateId }) => {
+    newSocket.on('challenge_accepted', ({ opponent, topic, debateId }) => {
       navigate('/debate', { state: { opponent, topic, debateId } });
     });
 
     return () => {
-      socket.off('online_users');
-      socket.off('challenge_received');
-      socket.off('challenge_accepted');
+      newSocket.off('online_users');
+      newSocket.off('challenge_received');
+      newSocket.off('challenge_accepted');
       if (user) {
-        socket.emit('user_offline', { userId: user.id });
+        newSocket.emit('user_offline', { userId: user.id });
       }
+      newSocket.disconnect();
     };
   }, [user, navigate]);
 
