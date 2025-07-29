@@ -103,7 +103,6 @@ class DebateOut(BaseModel):
 
 # ------------------ MESSAGE SCHEMAS ------------------ #
 class MessageCreate(BaseModel):
-    debate_id: int
     sender_id: Optional[int] = None
     content: str
     sender_type: str = 'user'
