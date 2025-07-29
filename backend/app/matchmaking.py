@@ -107,14 +107,13 @@ async def accept_challenge(sid, data):
 
     print(f"Debate created with id: {debate_id}")
 
-    if isinstance(challenger_id, str) and challenger_id in online_users:
-        challenger_sid = online_users[challenger_id]['sid']
-        print(f"Sending challenge accepted to {challenger_sid}")
-        await sio.emit('challenge_accepted', {'opponent': opponent, 'topic': topic, 'debateId': debate_id}, room=challenger_sid)
-    elif isinstance(challenger_id, int) and str(challenger_id) in online_users:
-        challenger_sid = online_users[str(challenger_id)]['sid']
-        print(f"Sending challenge accepted to {challenger_sid}")
-        await sio.emit('challenge_accepted', {'opponent': opponent, 'topic': topic, 'debateId': debate_id}, room=challenger_sid)
+    challenger_sid = online_users[str(challenger_id)]['sid']
+    print(f"Sending challenge accepted to {challenger_sid}")
+    await sio.emit('challenge_accepted', {'opponent': opponent, 'topic': topic, 'debateId': debate_id}, room=challenger_sid)
+
+    # Notify the user who accepted the challenge
+    challenger_user = online_users[str(challenger_id)]
+    await sio.emit('challenge_accepted', {'opponent': challenger_user, 'topic': topic, 'debateId': debate_id}, room=sid)
 
 
 @sio.event
@@ -189,4 +188,4 @@ async def end_debate(sid, data):
                 db_debate.winner = "draw"
             db.commit()
 
-        await sio.emit('debate_ended', {'winner': winner}, room=sid)
+        await sio.emit('debate_ended', {'winner': winner}, room=f"debate_{debate_id}")
