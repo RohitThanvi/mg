@@ -240,44 +240,39 @@ const Dashboard = () => {
             </div>
           </Card>
 
-          {/* Gamification */}
-          <div className="space-y-8">
-            {/* Streaks */}
-            <Card className="bg-gradient-card border-border/50 p-6">
-              <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center">
-                <TrendingUp className="mr-2 h-5 w-5 text-cyber-green" />
-                Streaks
-              </h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Current Streak</span>
-                  <span className="font-bold text-foreground">{streaks?.current_streak || 0}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Max Streak</span>
-                  <span className="font-bold text-foreground">{streaks?.max_streak || 0}</span>
-                </div>
-              </div>
-            </Card>
-
-            {/* Badges */}
-            <Card className="bg-gradient-card border-border/50 p-6">
-              <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center">
-                <Trophy className="mr-2 h-5 w-5 text-cyber-gold" />
-                Badges
-              </h3>
-              <div className="flex flex-wrap gap-4">
-                {badges.map((badge) => (
-                  <div key={badge.id} className="text-center">
-                    <div className="p-2 bg-muted/20 rounded-lg">
-                      <Trophy className="h-8 w-8 text-cyber-gold" />
-                    </div>
-                    <p className="text-xs mt-1 text-muted-foreground">{badge.name}</p>
+          {/* Leaderboard */}
+          <Card className="bg-gradient-card border-border/50 p-6">
+            <h3 className="text-xl font-semibold text-foreground mb-4 flex items-center">
+              <Trophy className="mr-2 h-5 w-5 text-cyber-gold" />
+              Leaderboard
+            </h3>
+            <div className="space-y-3">
+              {leaderboard.map((entry) => (
+                <div
+                  key={entry.rank}
+                  className={`flex items-center justify-between p-3 rounded-lg ${
+                    entry.username === user?.username ? 'bg-cyber-red/10 border border-cyber-red/30' : 'bg-muted/20'
+                  }`}
+                >
+                  <div className="flex items-center space-x-3">
+                    <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                      entry.rank === 1 ? 'bg-cyber-gold text-background' :
+                      entry.rank === 2 ? 'bg-gray-400 text-background' :
+                      entry.rank === 3 ? 'bg-amber-600 text-background' :
+                      'bg-muted text-muted-foreground'
+                    }`}>
+                      {entry.rank}
+                    </span>
+                    <span className="font-medium text-foreground">{entry.username}</span>
                   </div>
-                ))}
-              </div>
-            </Card>
-          </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-foreground">{entry.elo} ELO</p>
+                    <p className="text-xs text-muted-foreground">{entry.mind_tokens} tokens</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
         </div>
       </div>
     </div>

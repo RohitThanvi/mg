@@ -12,7 +12,12 @@ router = APIRouter(
 async def create_ai_message_route(debate_id: int, message: schemas.MessageCreate, db: Session = Depends(database.get_db), current_user: models.User = Depends(auth.get_current_user)):
     print(f"Received AI message request for debate {debate_id}")
     # 1. Save user's message
-    user_message = models.Message(**message.dict(), debate_id=debate_id, user_id=current_user.id)
+    user_message = models.Message(
+        content=message.content,
+        sender_type=message.sender_type,
+        debate_id=debate_id,
+        user_id=current_user.id
+    )
     db.add(user_message)
     db.commit()
     db.refresh(user_message)
