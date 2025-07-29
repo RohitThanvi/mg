@@ -68,6 +68,7 @@ const Result = () => {
           },
         });
         const analysisData = await analysisResponse.json();
+        console.log("Analysis data:", analysisData);
 
         setResult({
           score: analysisData.score,
@@ -185,7 +186,7 @@ const Result = () => {
               Battle complete • {formatDuration(duration)} duration
             </p>
             <p className="text-xl font-semibold text-foreground">
-              Final Score: {result.score}/100
+              Final Score: {result.score}
             </p>
           </Card>
 

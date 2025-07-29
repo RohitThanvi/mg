@@ -35,9 +35,8 @@ async def disconnect(sid):
 
 @sio.event
 async def user_online(sid, data):
-    print(f"User online: {data}")
     user_id = data.get('userId')
-    online_users[user_id] = {
+    online_users[str(user_id)] = {
         'id': user_id,
         'sid': sid,
         'username': data.get('username'),
@@ -57,8 +56,6 @@ async def challenge_user(sid, data):
     opponent_id = data.get('opponentId')
     challenger = data.get('challenger')
     topic = data.get('topic')
-    print(f"Challenge from {challenger['username']} to {opponent_id}")
-    print(f"Online users: {online_users}")
 
     if opponent_id == 'ai':
         with Session(bind=database.get_db.engine) as db:
@@ -82,7 +79,6 @@ async def challenge_user(sid, data):
         await sio.emit('challenge_accepted', {'opponent': ai_opponent, 'topic': topic, 'debateId': debate_id}, room=sid)
     elif str(opponent_id) in online_users:
         opponent_sid = online_users[str(opponent_id)]['sid']
-        print(f"Sending challenge to {opponent_sid}")
         await sio.emit('challenge_received', {'challenger': challenger, 'topic': topic}, room=opponent_sid)
 
 

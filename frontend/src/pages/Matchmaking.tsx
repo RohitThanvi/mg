@@ -64,11 +64,13 @@ const Matchmaking = () => {
   }, [user, navigate]);
 
   const handleChallenge = (socket: any, opponent: OnlineUser) => {
+    console.log("Challenging user:", opponent);
     if (opponent.id === 'human') {
       // Find a human opponent
       const humanOpponent = onlineUsers.find(onlineUser => onlineUser.id !== user?.id);
       if (humanOpponent) {
         const topic = getRandomTopic();
+        console.log("Emitting challenge_user event with data:", { challenger: user, opponentId: humanOpponent.id, topic });
         socket.emit('challenge_user', { challenger: user, opponentId: humanOpponent.id, topic });
         toast({
           title: `Challenge sent to ${humanOpponent.username}`,
@@ -83,6 +85,7 @@ const Matchmaking = () => {
       }
     } else {
       const topic = getRandomTopic();
+      console.log("Emitting challenge_user event with data:", { challenger: user, opponentId: opponent.id, topic });
       socket.emit('challenge_user', { challenger: user, opponentId: opponent.id, topic });
       toast({
         title: `Challenge sent to ${opponent.username}`,
