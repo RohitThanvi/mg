@@ -59,19 +59,14 @@ const Result = () => {
     const fetchResults = async () => {
       setIsLoading(true);
       try {
+        const debateResponse = await fetch(`http://localhost:8000/debate/${location.state?.debateId}`);
+        const debateData = await debateResponse.json();
+
         const resultsResponse = await fetch(`http://localhost:8000/debate/${location.state?.debateId}/results`);
         const resultsData = await resultsResponse.json();
 
-        const analysisResponse = await fetch(`http://localhost:8000/analysis/${location.state?.debateId}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-        const analysisData = await analysisResponse.json();
-        console.log("Analysis data:", analysisData);
-
         setResult({
-          score: analysisData.score,
+          score: 0,
           result: resultsData.winner,
           eloChange: resultsData.elo_change,
           tokensEarned: resultsData.tokens_earned,
@@ -80,7 +75,7 @@ const Result = () => {
             persuasion: 0,
             evidence: 0,
             style: 0,
-            overall: analysisData.analysis,
+            overall: debateData.analysis,
           }
         });
       } catch (error) {

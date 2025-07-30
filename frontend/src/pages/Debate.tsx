@@ -202,6 +202,7 @@ const Debate = () => {
   }, [socket, opponent, topic, messages, timeLeft, navigate]);
 
   const forfeit = () => {
+    socket.emit('forfeit_debate', { debate_id: debateId });
     toast({
       title: "Debate forfeited",
       description: "You have left the debate arena.",
@@ -209,6 +210,21 @@ const Debate = () => {
     });
     navigate('/dashboard');
   };
+
+  useEffect(() => {
+    socket.on('debate_forfeited', () => {
+      toast({
+        title: "Opponent forfeited",
+        description: "Your opponent has left the debate arena.",
+        variant: "destructive",
+      });
+      navigate('/dashboard');
+    });
+
+    return () => {
+      socket.off('debate_forfeited');
+    };
+  }, [socket, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-bg flex flex-col">
