@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from . import database, models, schemas
 from .ai import get_ai_response
-from .evaluation import evaluate_debate
+from .services.evaluation_service import evaluate_debate, get_debate_analysis
 
 router = APIRouter()
 
@@ -115,12 +115,8 @@ async def accept_challenge(sid, data):
 @sio.event
 async def decline_challenge(sid, data):
     challenger_id = data.get('challengerId')
-    if isinstance(challenger_id, str) and challenger_id in online_users:
-        challenger_sid = online_users[challenger_id]['sid']
-        await sio.emit('challenge_declined', {}, room=challenger_sid)
-    elif isinstance(challenger_id, int) and str(challenger_id) in online_users:
-        challenger_sid = online_users[str(challenger_id)]['sid']
-        await sio.emit('challenge_declined', {}, room=challenger_sid)
+    challenger_sid = online_users[str(challenger_id)]['sid']
+    await sio.emit('challenge_declined', {}, room=challenger_sid)
 
 import logging
 
@@ -155,6 +151,11 @@ async def human_message(sid, data):
         await sio.emit('new_message', schemas.MessageOut.from_orm(user_message).dict(), room=f"debate_{debate_id}")
 
 @sio.event
+async def forfeit_debate(sid, data):
+    debate_id = data.get('debate_id')
+    await sio.emit('debate_forfeited', {}, room=f"debate_{debate_id}", skip_sid=sid)
+
+@sio.event
 async def end_debate(sid, data):
     debate_id = data.get('debate_id')
     print(f"Ending debate with ID: {debate_id}")
@@ -162,26 +163,47 @@ async def end_debate(sid, data):
         messages = db.query(models.Message).filter(models.Message.debate_id == debate_id).all()
         winner = evaluate_debate(messages)
 
-        user_id = None
-        for message in messages:
-            if message.sender_type == 'user':
-                user_id = message.user_id
-                break
+        user_ids = [m.user_id for m in messages if m.user_id is not None]
 
-        if user_id:
+        if len(user_ids) == 2:
+            user1_id, user2_id = user_ids
+            user1 = db.query(models.User).filter(models.User.id == user1_id).first()
+            user2 = db.query(models.User).filter(models.User.id == user2_id).first()
+
+            if winner == 'user':
+                user1.elo += 10
+                user1.mind_tokens += 5
+                user2.elo -= 10
+                db_debate = db.query(models.Debate).filter(models.Debate.id == debate_id).first()
+                db_debate.winner = user1.username
+            elif winner == 'opponent':
+                user2.elo += 10
+                user2.mind_tokens += 5
+                user1.elo -= 10
+                db_debate = db.query(models.Debate).filter(models.Debate.id == debate_id).first()
+                db_debate.winner = user2.username
+            else:
+                db_debate = db.query(models.Debate).filter(models.Debate.id == debate_id).first()
+                db_debate.winner = "draw"
+        elif len(user_ids) == 1:
+            user_id = user_ids[0]
             user = db.query(models.User).filter(models.User.id == user_id).first()
             if winner == 'user':
                 user.elo += 10
                 user.mind_tokens += 5
                 db_debate = db.query(models.Debate).filter(models.Debate.id == debate_id).first()
                 db_debate.winner = user.username
-            elif winner == 'ai':
+            elif winner == 'opponent':
                 user.elo -= 10
                 db_debate = db.query(models.Debate).filter(models.Debate.id == debate_id).first()
                 db_debate.winner = "AI"
             else:
                 db_debate = db.query(models.Debate).filter(models.Debate.id == debate_id).first()
                 db_debate.winner = "draw"
-            db.commit()
+
+        analysis = get_debate_analysis(messages)
+        db_debate = db.query(models.Debate).filter(models.Debate.id == debate_id).first()
+        db_debate.analysis = analysis
+        db.commit()
 
         await sio.emit('debate_ended', {'winner': winner}, room=f"debate_{debate_id}")
