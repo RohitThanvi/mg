@@ -4,7 +4,6 @@ from . import models, schemas
 from .database import get_db
 from .ai import get_ai_response
 from .socketio_instance import sio
-from .evaluation import evaluate_debate
 
 router = APIRouter(
     prefix="/debate",
